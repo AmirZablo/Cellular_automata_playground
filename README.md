@@ -3,7 +3,7 @@ Just run /python3 game_of_life.py and enjoy!
 
 Python implementation of the famous cellular automata, with an user-friendly graphical interface. 
 
-Rules:
+##Rules:
 
 1- Any live cell with fewer than two live neighbours dies, as if by underpopulation.
 
