@@ -4,19 +4,21 @@ import numpy as np
 from matplotlib import patches
 from matplotlib.backend_bases import MouseButton
 from matplotlib import colors
+import matplotlib as mpl
 from os import listdir
 
 N=10 #Grid size (NxN)
 max_iter=99999999999
 speed=50
 paused=True
-color0 = list(np.random.choice(range(256), size=3))
-color1 = list(np.random.choice(range(256), size=3))
+color0 = list(np.random.choice(range(256), size=3)/255)
+color1 = list(np.random.choice(range(256), size=3)/255)
+cmap=colors.ListedColormap([color0,color1])
 
 mat=[np.zeros(N) for i in range(N)]
 
 fig,ax=plt.subplots(1,2,figsize=(12,8))
-fig.canvas.set_window_title("Conway's Game of Life")
+fig.canvas.manager.set_window_title("Conway's Game of Life")
 
 def on_click(event):
     global mat
@@ -25,18 +27,13 @@ def on_click(event):
     global speed
     global color0
     global color1
+    global cmap
     if event.button is MouseButton.LEFT:
         if event.inaxes==ax[1]:
             if paused:
                 new_mat=[item[:] for item in mat]
                 new_mat[int(event.ydata+0.5)][int(event.xdata+0.5)]=(mat[int(event.ydata+0.5)][int(event.xdata+0.5)]+1)%2
                 mat=[item[:] for item in new_mat]
-                ax[1].clear()
-                ax[1].set_xlabel("Click a cell to change its state!",fontsize=16)
-                ax[1].imshow(mat,cmap = colors.ListedColormap([color0, color1]))
-                ax[1].set_xticks([])
-                ax[1].set_yticks([])
-                plt.draw()
         elif event.inaxes==ax[0]:
             if event.xdata>1 and event.xdata<5.2 and event.ydata>9 and event.ydata<11: #Button run/pause
                 paused= not paused
@@ -70,8 +67,9 @@ def on_click(event):
                 update_GUI(paused)
                 mat=[[np.random.choice([0,1]) for i in range(N)] for j in range(N)]
             elif event.xdata>7 and event.xdata<11.2 and event.ydata>6 and event.ydata<8: #change color
-                color0 = list(np.random.choice(range(256), size=3))
-                color1 = list(np.random.choice(range(256), size=3))
+                color0 = list(np.random.choice(range(256), size=3)/255)
+                color1 = list(np.random.choice(range(256), size=3)/255)
+                cmap=colors.ListedColormap([color0,color1])
             elif event.xdata>7 and event.xdata<11.2 and event.ydata>3 and event.ydata<5: #Button new 25
                 paused=True
                 ax[0].clear()
@@ -93,7 +91,7 @@ def init():
     ax[1].set_ylim(-0.5,N-0.5)
     ax[1].set_xticks([])
     ax[1].set_yticks([])
-    ax[1].imshow(mat,cmap = colors.ListedColormap([color0, color1]))
+    grilla=ax[1].imshow(mat,cmap = cmap)
 
 def update(i,j):
     sum_neighbors=mat[(i+1)%N][j]+mat[(i+1)%N][(j+1)%N]+mat[i][(j+1)%N]+mat[(i-1)%N][(j+1)%N]+mat[(i-1)%N][j]+mat[(i-1)%N][(j-1)%N]+mat[i][(j-1)%N]+mat[(i+1)%N][(j-1)%N]
@@ -115,7 +113,7 @@ def initialize(iter):
             new_mat[i][j]=update(i,j)
             pass
     mat=[item[:] for item in new_mat]
-    ax[1].imshow(mat,cmap = colors.ListedColormap([color0, color1]))
+    ax[1].imshow(mat,cmap = cmap)
 
 def update_GUI(paused_):
     ax[0].set_xlim(0,12)
@@ -156,10 +154,10 @@ def update_GUI(paused_):
 
 def animate(iter):
     global mat
+    ax[1].clear()
+    ax[1].set_xticks([])
+    ax[1].set_yticks([])
     if not paused:
-        ax[1].clear()
-        ax[1].set_xticks([])
-        ax[1].set_yticks([])
         ax[1].set_xlabel("Simulation running",fontsize=16)
         new_mat=[[0 for j in range(N)] for i in range(N)]
         for i in range(N):
@@ -168,14 +166,21 @@ def animate(iter):
         mat=[item[:] for item in new_mat]
     else:
         ax[1].set_xlabel("Click a cell to change its state!",fontsize=16)
-    ax[1].imshow(mat,cmap = colors.ListedColormap([color0, color1]))
+    ax[1].imshow(mat,cmap = cmap)
+    xcenter=(-0.5+(N-0.5))/2
+    ycenter=(-0.5+(N-0.5))/2
+    ax[1].text(xcenter-N/3.7,ycenter+N/1.55,'States:',fontsize=16)
+    ax[1].text(xcenter+N/11,ycenter+N/1.55,'/',fontsize=16)
+    ax[1].text(xcenter+N/8,ycenter+N/1.55,'Alive',weight="bold",color=color1,fontsize=16)
+    ax[1].text(xcenter-N/13.5,ycenter+N/1.55,'Dead',weight="bold",color=color0,fontsize=16)
+    
 
 ##############################################
 #### Welcome screen ####
 aux_welcome=FuncAnimation(fig,initialize,frames=2,interval=1,init_func=init,repeat=False)
 anim=FuncAnimation(fig,animate,frames=max_iter,interval=speed,init_func=init,repeat=False)
 
+
 #### Buttons ####
 update_GUI(paused)
-
 plt.show()
